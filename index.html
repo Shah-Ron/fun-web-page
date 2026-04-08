@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAGIQ Launchpad</title>
+    <link rel="icon" type="image/png" href="magiq.png">
+    
+    <style>
+        /* =========================================
+           1. CORE VARIABLES & SETUP
+           ========================================= */
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f4f7f6;
+            --text-color: #555;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* =========================================
+           2. LOGO & ENTRANCE ANIMATIONS
+           ========================================= */
+        @keyframes logoEntrance {
+            0% { opacity: 0; transform: translateY(-30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-link {
+            display: block;
+            margin-bottom: 80px; 
+            transition: all 0.3s ease;
+        }
+
+        .logo-link:hover {
+            transform: translateY(6px);
+            filter: drop-shadow(0px 10px 12px rgba(0, 0, 0, 0.15));
+        }
+
+        .logo {
+            width: 375px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            animation: logoEntrance 0.8s ease-out forwards;
+            image-rendering: -webkit-optimize-contrast; /* Helps on Chrome/Safari/Edge */
+            image-rendering: crisp-edges; /* Forces the browser to prefer sharp lines over smooth blurs */
+        }
+
+        /* =========================================
+           3. THE GRID LAYOUT
+           ========================================= */
+        /* THE ANIMATION BLUEPRINTS */
+        @keyframes gridEntrance {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes centerPop {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideLeft {
+            0% { opacity: 0; transform: translateX(110%); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideRight {
+            0% { opacity: 0; transform: translateX(-110%); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            width: 85%;
+            max-width: 1100px;
+            justify-content: center;
+            
+            /* Hidden initially, triggers after 0.4s */
+            opacity: 0; 
+            animation: gridEntrance 0.8s ease-out 0.4s forwards;
+            margin-bottom: 25vh;
+        }
+
+        .tile-column {
+            display: flex;
+            flex-direction: column;
+            position: relative; /* Anchors the drop-down description box */
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        /* 2. Center Tile Appears First */
+        .tile-column:nth-child(2) {
+            z-index: 5; /* Keeps it on top of the sliding tiles */
+            animation: centerPop 0.5s ease-out 0.4s forwards;
+        }
+
+        /* 3. Left Tile Slides Out */
+        .tile-column:nth-child(1) {
+            z-index: 1; /* Tucks it behind the center tile */
+            animation: slideLeft 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1) 0.6s forwards;
+        }
+
+        /* 4. Right Tile Slides Out */
+        .tile-column:nth-child(3) {
+            z-index: 1; /* Tucks it behind the center tile */
+            animation: slideRight 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1) 0.6s forwards;
+        }
+
+        /* =========================================
+           4. MAGIQ BUTTONS (TILES)
+           ========================================= */
+        .tile {
+            background: white;
+            padding: 30px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 110px; /* Clean, modern rounded rectangle */
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Softened the shadow */
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-sizing: border-box;
+            width: 100%;
+            
+            /* Keeps the tile above the description box */
+            position: relative;
+            z-index: 10;
+        }
+
+        .tile:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            border-radius: 12px;
+        }
+
+        .logo-m {
+            max-width: 40px;
+            height: auto;
+            margin-right: 15px;
+        }
+
+        /* =========================================
+           5. DROP-DOWN DESCRIPTION BOXES
+           ========================================= */
+        .desc-box {
+            position: absolute;
+            top: 100%; 
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            line-height: 1.5;
+            z-index: 5; /* Stays underneath the tile */
+            
+            /* Hidden state */
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-20px);
+            border: 1px solid transparent;
+            transition: all 0.4s ease-in-out;
+        }
+
+        /* The Trigger: When column is hovered, show the box */
+        .tile-column:hover .desc-box {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(15px); /* Drops down leaving a clean 15px gap */
+            border: 1px solid #eee;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .desc-box:hover {
+            background-color: #f8fbff; 
+            color: #222; 
+            border-color: #e0e6ed; 
+        }
+
+        /* =========================================
+           6. THE THEME TOGGLE SWITCH
+           ========================================= */
+        .theme-switch-wrapper {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .theme-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-color); /* Automatically changes in Dark Mode! */
+            margin: 0 12px; /* Creates a perfect gap between the text and the switch */
+            user-select: none; /* Stops the text from accidentally highlighting if they click too fast */
+        }
+
+        .theme-switch {
+            display: inline-block;
+            height: 28px;
+            position: relative;
+            width: 50px;
+        }
+
+        .theme-switch input {
+            display: none; /* Hides the ugly default checkbox */
+        }
+
+        .slider {
+            background-color: #ccc;
+            bottom: 0; left: 0; right: 0; top: 0;
+            position: absolute;
+            cursor: pointer;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            background-color: white;
+            bottom: 4px; left: 4px;
+            content: "";
+            height: 20px; width: 20px;
+            position: absolute;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        /* When the switch is clicked (checked) */
+        input:checked + .slider {
+            background-color: #3a3a3a; /* A sleek, dark greyish-black */
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px); /* Slides the white circle to the right */
+        }
+
+        /* =========================================
+           7. FUN BUBU BIKE / BAT WIDGET
+           ========================================= */
+        .gif-mover {
+            position: fixed;
+            top: 20%;
+            left: 10%;
+            z-index: 9999;
+            cursor: pointer;
+            /* We removed the transition line! JavaScript will mathematically inject it. */
+        }
+
+        .gif-flipper {
+            /* This is the smooth 3D transition when it turns around! */
+            transition: transform 0.4s ease-in-out;
+            transform: rotateY(0deg); 
+            transform-origin: center;
+        }
+
+        .gif-hover {
+            width: 80px; 
+            height: auto;
+            display: block;
+            /* This handles the continuous lazy bobbing up and down */
+            animation: hoverFloat 3s ease-in-out infinite;
+            transition: filter 0.4s ease;
+            --img-flip: 1;
+        }
+
+        .dark-gif {
+            display: none;
+        }
+
+        .light-gif {
+            display: block;
+        }
+
+        .missed-msg {
+            position: fixed;
+            color: var(--primary-color); /* Automatically adapts to Light/Dark mode! */
+            font-weight: 800;
+            font-size: 1rem;
+            z-index: 10000;
+            pointer-events: none; /* Prevents the text from blocking other clicks */
+            
+            /* The floating fade-out animation */
+            animation: floatUpFade 1s ease-out forwards;
+        }
+
+        .fact-msg {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #2c3e50;
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: 1.5px solid var(--accent-color);
+            font-size: 0.9rem;
+            max-width: 200px;
+            z-index: 10001;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: factFade 5s ease-in-out forwards;
+        }
+
+        .fact-msg strong {
+            color: var(--accent-color);
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        @keyframes hoverFloat {
+            0% { transform: translateY(0px) scaleX(var(--img-flip)); }
+            50% { transform: translateY(-15px) scaleX(var(--img-flip)); } 
+            100% { transform: translateY(0px) scaleX(var(--img-flip)); }  
+        }
+
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+
+        @keyframes factFade {
+            0% { opacity: 0; transform: translateY(10px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-25px); }
+        }
+
+        /* =========================================
+           8. DARK MODE (CLASS-BASED OVERRIDE)
+           ========================================= */
+        body.dark-mode {
+            --primary-color: #ecf0f1;
+            --bg-color: #121212;
+            --text-color: #a0aab2;
+        }
+
+        body.dark-mode .tile, body.dark-mode .desc-box {
+            background: #1e1e1e;
+            border-color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        body.dark-mode .desc-box:hover {
+            background-color: #2a2a2a; 
+            border-color: #444; 
+            color: #ffffff; 
+        }
+
+        body.dark-mode .logo, body.dark-mode .logo-m {
+            filter: brightness(0) invert(1);
+        }
+
+        body.dark-mode .logo-link:hover {
+            filter: drop-shadow(0px 10px 12px rgba(255, 255, 255, 0.15));
+        }
+
+        body.dark-mode .catch-me-btn {
+            background-color: #ff6b6b;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        body.dark-mode .dark-gif {
+            display: block;
+            --img-flip: -1;
+        }
+
+        body.dark-mode .light-gif {
+            display: none;
+            --img-flip: 1;
+        }
+
+        body.dark-mode .fact-msg {
+            background: rgba(18, 18, 18, 0.7); /* Deep black-grey */
+            color: #ffffff;                    /* Pure white text */
+            border: 2px solid rgba(255, 255, 255, 0.8);         /* Sharp white border */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6); /* Heavier shadow for depth */
+        }
+
+        body.dark-mode .fact-msg strong {
+            color: #ffffff;                    /* Keeps the header white too */
+            border-bottom: 1px solid #444;     /* Optional: adds a subtle divider */
+            padding-bottom: 2px;
+            width: 100%;
+        }
+
+        /* Dark Mode Scoreboard (Batman Style) */
+        body.dark-mode .tally-counter {
+            background: rgba(20, 20, 20, 0.7);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 242, 255, 0.2); /* Subtle blue glow */
+        }
+
+        /* Add a little "pulse" animation when the number changes */
+        .tally-pulse {
+            transform: scale(1.2);
+            color: #e74c3c; /* Red pulse for light mode */
+        }
+        body.dark-mode .tally-pulse {
+            color: #00f2ff; /* Blue pulse for dark mode */
+        }
+
+        body.dark-mode .modal-content {
+            background: rgba(30, 30, 30, 0.95); color: white; border-color: #00f2ff;
+        }
+        .ttt-grid {
+            display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; margin: 20px auto;
+        }
+        .cell {
+            width: 80px; height: 80px; background: rgba(0,0,0,0.05); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+
+        body.dark-mode .cell { 
+            background: rgba(255,255,255,0.1); 
+        }
+
+        .cell:hover { 
+            background: rgba(0,0,0,0.1); 
+        }
+
+        .cell.taken { 
+            cursor: default; 
+        }
+
+        body.dark-mode .m-cell { 
+            background: rgba(255, 255, 255, 0.1); 
+        }
+
+        /* =========================================
+           9. THE TALLY SCOREBOARD
+           ========================================= */
+        .tally-counter {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50px; /* Pill shape */
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 800;
+            color: #2c3e50;
+            z-index: 10002;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            pointer-events: none; /* User can't click the scoreboard */
+            transition: all 0.3s ease;
+        }
+
+        /* =========================================
+           10. TIC-TAC-TOE STYLING
+           ========================================= */
+        .mini-game-box {
+            display: none; /* Hidden by default */
+            position: absolute;
+            left: 90px; /* Sits to the right of the 80px GIF */
+            top: -20px;
+            width: 130px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 8px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        body.dark-mode .mini-game-box {
+            background: rgba(20, 20, 20, 0.8);
+            border: 2px solid #ffffff;
+            color: white;
+        }
+
+        #miniStatus {
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .m-cell {
+            width: 35px;
+            height: 35px;
+            background: rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch-wrapper">
+        <span class="theme-label">Light Mode</span>
+        
+        <label class="theme-switch" for="checkbox">
+            <input type="checkbox" id="checkbox" />
+            <div class="slider"></div>
+        </label>
+        
+        <span class="theme-label">Dark Mode</span>
+    </div>
+
+    <a href="https://www.magiqsoftware.com" target="_blank" class="logo-link">
+        <img src="MAGIQ Cloud.png" alt="MAGIQ Software Logo" class="logo">
+    </a>
+
+    <div class="grid">
+        
+        <div class="tile-column">
+            <a href="https://codc.magiqcloud.com/" class="tile" target="_blank">
+                <img src="magiq.png" alt="MAGIQ Enterprise Icon" class="logo-m"> MAGIQ Enterprise
+            </a>
+            <div class="desc-box">
+                <b>MAGIQ Enterprise</b> serves as the central hub for the Council's day-to-day administrative and operational functions. It provides a comprehensive suite of tools for financial management, payroll processing, and internal procurement. Staff also utilize this platform to manage property rates, process regulatory consents, and handle community service requests. By centralizing these workflows, Enterprise ensures our core services are delivered efficiently and accurately to the Central Otago community.
+            </div>
+        </div>
+
+        <div class="tile-column">
+            <a href="https://codc.magiqcloud.com/Performance/app/tabs" class="tile" target="_blank">
+                <img src="magiq.png" alt="MAGIQ Performance Icon" class="logo-m"> MAGIQ Performance
+            </a>
+            <div class="desc-box">
+                <b>MAGIQ Performance</b> is the Council's dedicated platform for business intelligence, strategic reporting, and financial planning. It empowers department managers and finance teams to build accurate budgets and forecast long-term financial models. Users can access interactive dashboards to visualize complex data, track key performance indicators, and monitor operational goals. This centralized reporting capability ultimately drives data-informed decision-making across all levels of the organisation.
+            </div>
+        </div>
+
+        <div class="tile-column">
+            <a href="https://codc.magiqcloud.com/Documents/portals/default/" class="tile" target="_blank">
+                <img src="magiq.png" alt="MAGIQ Documents Icon" class="logo-m"> MAGIQ Documents
+            </a>
+            <div class="desc-box">
+                <b>MAGIQ Documents</b> is our official Electronic Document and Records Management System designed to keep Council information secure and organised. It allows staff to easily search for files, manage version control, and collaborate on shared policies or project documents. Using this system ensures we maintain strict compliance with local government archiving standards and public records legislation. It also features automated workflows to streamline document approvals and safely capture important email correspondence.
+            </div>
+        </div>
+
+    </div>
+    <div id="tallyScoreboard" class="tally-counter">Attempts: 0</div>
+
+    <div id="catchMeBtn" class="gif-mover">
+        <div id="miniGameContainer" class="mini-game-box">
+            <div id="miniStatus">Tic-Tac-Toe!</div>
+            <div class="mini-grid" id="miniGrid">
+                <div class="m-cell" data-index="0"></div>
+                <div class="m-cell" data-index="1"></div>
+                <div class="m-cell" data-index="2"></div>
+                <div class="m-cell" data-index="3"></div>
+                <div class="m-cell" data-index="4"></div>
+                <div class="m-cell" data-index="5"></div>
+                <div class="m-cell" data-index="6"></div>
+                <div class="m-cell" data-index="7"></div>
+                <div class="m-cell" data-index="8"></div>
+            </div>
+        </div>
+
+        <div class="gif-flipper" id="gifFlipper">
+            <img src="bubu-bike-running.gif" class="gif-hover light-gif" alt="Catch me if you can!">
+            <img src="bat.gif" class="gif-hover dark-gif" alt="Catch me if you can!">
+        </div>
+    </div>
+
+    <script>
+        const toggleSwitch = document.querySelector('.theme-switch input[type="checkbox"]');
+        const currentTheme = localStorage.getItem('theme');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        const tallyDisplay = document.getElementById('tallyScoreboard');
+
+        // 1. On page load: Check Local Storage OR Browser Preference
+        if (currentTheme === 'dark' || (!currentTheme && prefersDarkScheme.matches)) {
+            document.body.classList.add('dark-mode');
+            toggleSwitch.checked = true; // Visually slide the switch to the right
+        }
+
+        // 2. Listen for the user clicking the switch
+        toggleSwitch.addEventListener('change', function(e) {
+            if (e.target.checked) {
+                // User slid it to Dark Mode
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark'); // Save preference for tomorrow
+            } else {
+                // User slid it to Light Mode
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light'); // Save preference for tomorrow
+            }
+        });
+
+        // =========================================
+        // FUN BUBU BIKE / BAT LOGIC
+        // =========================================
+        const mover = document.getElementById('catchMeBtn');
+        const flipper = document.getElementById('gifFlipper');
+        let isCaught = false; 
+        let idleTimer; // This stores our 5-minute countdown
+        let clickAttempts = 0; // Tracks how many times he dodged
+
+        const WANDERING_SPEED = 60;
+        const EVASION_SPEED = 1200;
+
+        // --- 1. THE FUN FACTS LIST ---
+        const funFacts = [
+            "Central Otago is the only region in NZ to have a continental climate, with the hottest summers and coldest winters.",
+            "Ophir holds the record for NZ's lowest temperature: -25.6°C back in 1995!",
+            "Alexandra is the 'Blossom Capital' of New Zealand, celebrating its festival every September since 1957.",
+            "The Clutha River (Mata-Au) is the swiftest river in the Southern Hemisphere.",
+            "The Otago Central Rail Trail was NZ's first 'Great Ride,' covering 152km of old railway line.",
+            "Cromwell’s giant fruit sculpture was erected in 1989 to celebrate the region's stone fruit industry.",
+            "Central Otago is the world's southernmost commercial wine-growing region, famous for its Pinot Noir.",
+            "The Clyde Dam is the largest concrete gravity dam in New Zealand.",
+            "St Bathans’ famous Blue Lake was actually created by man-made hydraulic mining during the gold rush.",
+            "Naseby is the curling capital of NZ, home to the only dedicated indoor curling rink in the Southern Hemisphere.",
+            "Central Otago is the driest region in New Zealand, with some areas getting less than 300mm of rain a year.",
+            "The 'Roaring Meg' stream was reportedly named after a high-spirited redhead from the gold rush days.",
+            "The Kawarau Bridge near Gibbston was the site of the world’s first commercial bungy jump in 1988.",
+            "Old Cromwell Town had to be partially relocated and rebuilt before Lake Dunstan was filled in 1992.",
+            "The schist rock used in many local buildings is over 200 million years old.",
+            "Central Otago landscapes were used to film many 'Middle-earth' scenes in the Lord of the Rings movies.",
+            "The Hayes Engineering Works in Oturehua is where the world-famous Hayes wire strainer was invented.",
+            "The first gold in the region was discovered in 1861 at Gabriel's Gully.",
+            "The Kingston Flyer is one of NZ's most famous vintage steam trains, once serving the region's mines.",
+            "Alexandra’s clock on the hill is 11 meters wide and can be seen from almost anywhere in town."
+        ];
+        const batmanFacts = [
+            "Batman first appeared in Detective Comics #27 in May 1939.",
+            "Gotham City is officially located in the state of New Jersey.",
+            "Bruce Wayne's name comes from Robert the Bruce and Mad Anthony Wayne.",
+            "The Joker was originally supposed to be killed off in his very first appearance.",
+            "Batman's IQ is canonically 192, significantly higher than Einstein's.",
+            "The Batcave was first seen in the 1943 Batman TV serial, not the comics.",
+            "Kevin Conroy voiced Batman for 30 years, longer than any other actor.",
+            "In early comics, Batman actually used a gun and occasionally killed villains.",
+            "Batman is a polyglot, capable of speaking over 40 different languages.",
+            "The 1966 Batman TV show was so popular it saved the comic from cancellation.",
+            "Arkham Asylum is named after the fictional city of Arkham, Massachusetts.",
+            "The Bat-Signal first appeared in 1942 to call Batman to police headquarters.",
+            "Bruce Wayne is a part-owner of the Daily Planet, meaning he's technically Superman's boss.",
+            "Batman has a specialized 'contingency plan' to take down every member of the Justice League.",
+            "The first Robin, Dick Grayson, eventually became the hero known as Nightwing.",
+            "Batman once became the 'God of Knowledge' after sitting on the Mobius Chair.",
+            "Gotham City got its name from a jeweler Bruce Wayne found in a phone book.",
+            "The cowl's ears aren't just for show; they contain high-gain antennas and sensors.",
+            "Batman has a son named Damian Wayne, whose mother is Talia al Ghul.",
+            "In the 'Flashpoint' timeline, Bruce was killed and his father Thomas became Batman."
+        ];
+
+        // --- TIC-TAC-TOE STATE ---
+        let isGaming = false;
+        let gamesWon = 0; //Tracks how many times you beat the AI
+        let gamesPlayed = 0; // Tracks how many times the board has opened!
+        let gameBoard = ["", "", "", "", "", "", "", "", ""];
+        const miniBox = document.getElementById('miniGameContainer');
+        const miniCells = document.querySelectorAll('.m-cell');
+        const miniStatus = document.getElementById('miniStatus');
+
+        // Stop clicks and hovers inside the game from reaching the GIF!
+        miniBox.addEventListener('click', (e) => e.stopPropagation());
+        miniBox.addEventListener('mouseover', (e) => e.stopPropagation());
+
+        // 1. TRIGGER GAME EVERY 50 ATTEMPTS
+        function startMiniGame() {
+            isGaming = true;
+            gamesPlayed++; // Increase the total games played by 1
+            
+            // Anchor it in place IMMEDIATELY
+            const rect = mover.getBoundingClientRect();
+            mover.style.transition = 'none'; 
+            mover.style.left = rect.left + 'px';
+            mover.style.top = rect.top + 'px';
+
+            gameBoard = ["", "", "", "", "", "", "", "", ""];
+            miniCells.forEach(c => {
+                c.textContent = "";
+                c.classList.remove('taken');
+            });
+            miniBox.style.display = "block";
+            miniStatus.textContent = "Your turn (X)";
+        }
+
+        // 2. GAME MECHANICS
+        miniCells.forEach(cell => {
+            cell.addEventListener('click', (e) => {
+                const idx = e.target.dataset.index;
+                if (gameBoard[idx] === "" && isGaming) {
+                    gameBoard[idx] = "X";
+                    e.target.textContent = "X";
+                    e.target.classList.add('taken');
+                    
+                    if (checkWinner("X")) return endGame(true);
+                    if (!gameBoard.includes("")) return endGame(false, "Draw!");
+                    
+                    setTimeout(aiMove, 400);
+                }
+            });
+        });
+
+        function aiMove() {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            let move = -1;
+
+            // THE PITY CHECK: Is this the 5th, 10th, or 15th game?
+            const isDumbGame = (gamesPlayed % 5 === 0);
+
+            // Only use the smart strategies if it's NOT a dumb game
+            if (!isDumbGame) {
+                // STRATEGY 1: Can the AI WIN right now?
+                for (let combo of wins) {
+                    const [a, b, c] = combo;
+                    const vals = [gameBoard[a], gameBoard[b], gameBoard[c]];
+                    if (vals.filter(v => v === "O").length === 2 && vals.includes("")) {
+                        move = combo[vals.indexOf("")];
+                        break;
+                    }
+                }
+
+                // STRATEGY 2: Must the AI BLOCK the player?
+                if (move === -1) {
+                    for (let combo of wins) {
+                        const [a, b, c] = combo;
+                        const vals = [gameBoard[a], gameBoard[b], gameBoard[c]];
+                        if (vals.filter(v => v === "X").length === 2 && vals.includes("")) {
+                            move = combo[vals.indexOf("")];
+                            break;
+                        }
+                    }
+                }
+
+                // STRATEGY 3: Take the CENTER
+                if (move === -1 && gameBoard[4] === "") {
+                    move = 4;
+                }
+            }
+
+            // STRATEGY 4: The Fallback (Used exclusively during "Dumb" games!)
+            if (move === -1) {
+                const empty = gameBoard.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+                move = empty[Math.floor(Math.random() * empty.length)];
+            }
+
+            // Apply the chosen move!
+            gameBoard[move] = "O";
+            miniCells[move].textContent = "O";
+            miniCells[move].classList.add('taken');
+            
+            if (checkWinner("O")) endGame(false);
+        }
+
+        function checkWinner(p) {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            return wins.some(s => s.every(i => gameBoard[i] === p));
+        }
+
+        function endGame(playerWon, msg) {
+            if (playerWon) {
+                gamesWon++; // Increase the slow-down multiplier!
+                miniStatus.textContent = "Ugh, fine. I'll slow down!";
+                
+                setTimeout(() => {
+                    miniBox.style.display = "none";
+                    isGaming = false;
+                    moveWanderingGif(true); // Resumes moving, but slower!
+                }, 2000);
+            } else {
+                miniStatus.textContent = msg || "Ha! I'm staying fast!";
+                
+                setTimeout(() => {
+                    miniBox.style.display = "none";
+                    isGaming = false; 
+                    moveWanderingGif(true); // Resumes at the exact same speed
+                }, 2000);
+            }
+        }
+
+        // --- 2. THE IDLE TIMER LOGIC ---
+        function startIdleTimer() {
+            clearTimeout(idleTimer);
+            // 13000ms = 13 seconds
+            idleTimer = setTimeout(showFunFact, 13000); 
+        }
+
+        function showFunFact() {
+            if (isCaught) return;
+
+            const fact = document.createElement('div');
+            fact.className = 'fact-msg';
+            
+            // 1. CHOOSE THE RIGHT FACT LIST
+            let activeList = document.body.classList.contains('dark-mode') ? batmanFacts : funFacts;
+            const randomFact = activeList[Math.floor(Math.random() * activeList.length)];
+            
+            // 2. SET THE CONTENT
+            fact.innerHTML = `<strong>💡 Fun Fact:</strong><br>${randomFact}`;
+            
+            const rect = mover.getBoundingClientRect();
+            fact.style.left = (rect.left + 40) + 'px';
+            fact.style.top = (rect.top - 80) + 'px'; // Adjusted height for longer facts
+            
+            document.body.appendChild(fact);
+            
+            // Clean up
+            setTimeout(() => fact.remove(), 5000);
+
+            // Restart timer
+            startIdleTimer();
+        }
+
+        // --- 3. MOVEMENT ENGINE ---
+        function moveWanderingGif(isEvading = false) {
+           // Abort movement if caught or gaming
+            if (isCaught || isGaming) return; 
+
+            const maxX = window.innerWidth - mover.clientWidth - 20;
+            const maxY = window.innerHeight - mover.clientHeight - 20;
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+
+            const rect = mover.getBoundingClientRect();
+            const currentX = rect.left;
+
+            flipper.style.transform = (randomX < currentX) ? 'rotateY(180deg)' : 'rotateY(0deg)';
+
+            const distanceX = randomX - currentX;
+            const distanceY = randomY - rect.top;
+            const totalDistance = Math.sqrt((distanceX * distanceX) + (distanceY * distanceY));
+
+            // --- THE NEW EARNED FATIGUE LOGIC ---
+            let activeSpeed = isEvading ? EVASION_SPEED : WANDERING_SPEED;
+            
+            if (isEvading) {
+                // Reduces speed by 200 for EVERY game you've won
+                const reduction = gamesWon * 200; 
+                activeSpeed = Math.max(200, EVASION_SPEED - reduction);
+            }
+
+            const duration = totalDistance / activeSpeed;
+            const movementStyle = isEvading ? 'ease-out' : 'linear';
+            
+            mover.style.transition = `top ${duration}s ${movementStyle}, left ${duration}s ${movementStyle}`; 
+            mover.style.left = randomX + 'px';
+            mover.style.top = randomY + 'px';
+        }
+
+        mover.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'left') moveWanderingGif(false); 
+        });
+
+        // --- 4. INTERACTION LISTENERS ---
+        mover.addEventListener('mouseover', function(e) {
+            // NEW: Abort if caught, gaming, OR surrendered
+            if (isCaught || isGaming) return;
+            
+            clickAttempts++; // Every dodge counts as an attempt
+
+            tallyDisplay.textContent = `Attempts: ${clickAttempts}`; 
+            tallyDisplay.classList.add('tally-pulse');
+            setTimeout(() => tallyDisplay.classList.remove('tally-pulse'), 200);
+
+            if (clickAttempts % 35 === 0) { // Left at 5 per your testing code
+                startMiniGame();
+                return;
+            }
+
+            startIdleTimer(); // RESET TIMER ON HOVER
+
+            let activeTaunts = document.body.classList.contains('dark-mode') ? 
+                ["I am Batman!", "RACHELLL!", "To the Batmobile!", "I am the night!", "Does it come in black?", "Justice!", "You merely adopted the dark.", "A watchful protector."] : 
+                ["Missed me!", "Too slow!", "Nice try!", "Nope!", "Almost had it!", "Zoom!", "Can't touch this!", "Better luck next time"];
+            
+            const taunt = document.createElement('div');
+            taunt.textContent = activeTaunts[Math.floor(Math.random() * activeTaunts.length)];
+            taunt.className = 'missed-msg';
+            taunt.style.left = e.clientX + 'px';
+            taunt.style.top = e.clientY + 'px';
+            document.body.appendChild(taunt);
+            setTimeout(() => taunt.remove(), 1000);
+
+            moveWanderingGif(true); 
+        });
+
+        mover.addEventListener('click', function(e) {
+            // NEW: Ignore clicks if the game is actively playing
+            if (isCaught || isGaming) return; 
+            
+            isCaught = true; 
+            gamesWon = 0; // RESET THE WIN TRACKER!
+            clickAttempts = 0; 
+            gamesPlayed = 0; // RESET THE GAMES COUNTER!
+
+            // HIDE MINI GAME BOX IF IT WAS OPEN
+            miniBox.style.display = "none";
+
+            tallyDisplay.textContent = `Attempts: 0`; 
+            startIdleTimer(); 
+
+            const rect = mover.getBoundingClientRect();
+            mover.style.transition = 'none'; 
+            mover.style.left = rect.left + 'px';
+            mover.style.top = rect.top + 'px';
+            mover.style.pointerEvents = 'none'; 
+
+            const defeatMsg = document.createElement('div');
+            if (document.body.classList.contains('dark-mode')) {
+                defeatMsg.textContent = "I FAILED GOTHAM!"; 
+                defeatMsg.style.color = '#00f2ff';
+            } else {
+                defeatMsg.textContent = "I hate you! Aarghh!";
+                defeatMsg.style.color = '#e74c3c';
+            }
+            
+            defeatMsg.className = 'missed-msg'; 
+            defeatMsg.style.fontSize = '1.5rem'; 
+            defeatMsg.style.textTransform = 'uppercase';
+            defeatMsg.style.left = e.clientX + 'px';
+            defeatMsg.style.top = (e.clientY - 20) + 'px';
+            document.body.appendChild(defeatMsg);
+            
+            setTimeout(() => defeatMsg.remove(), 1000);
+
+            setTimeout(() => {
+                isCaught = false; 
+                mover.style.pointerEvents = 'auto'; 
+                moveWanderingGif(false); 
+                startIdleTimer(); 
+            }, 3000); 
+        });
+        // KICKSTART
+        setTimeout(() => moveWanderingGif(false), 500);
+        startIdleTimer();
+
+    </script>
+
+</body>
+</html>
