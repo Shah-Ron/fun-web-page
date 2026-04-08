@@ -40,4 +40,5 @@ There is no build step or package manager required.
 Building this was an incredible deep dive into Vanilla JavaScript. I learned how to manage complex `setTimeout` loops without memory leaks, how to calculate distance/speed for dynamic CSS transitions, how to prevent Event Bubbling when nesting interactive elements, and how to build a priority-based AI for a classic grid game.
 
 ---
-*Built with logic, math, and just a little bit of spite for boring UI.*
+*Built with logic, math, and just a little bit of spite for boring UI.*<br>
+*PS: I will play with this more in the future.*
